@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>get center</title>
+</head>
+<body>
+
+<!-- templates/student_list.html -->
+<h2>Center </h2>
+<ul>
+  {% for centers in Centers %}
+    <li>
+        Short Name : <b>{{ centers.short_name }} </b>
+        Code:<b> {{ centers.code }}</b>
+        Name: <b>{{ centers.name }}</b>
+        Phone : <b> {{centers.phone}}</b>
+        City : <b> {{centers.village}}</b>
+        Status :<b> {{centers.status}}</b>
+
+    </li>
+  {% empty %}
+    <li>no center found </li>
+  {% endfor %}
+</ul>
+
+
+</body>
+</html>
