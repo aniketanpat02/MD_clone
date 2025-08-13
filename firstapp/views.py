@@ -13,7 +13,7 @@ from django.http import JsonResponse
 from .models import Center
 import json
 
-from .serializer import CenterSerializer
+from firstapp.serializer import CenterSerializer , CustomerSerializer , CollectionSerializer
 
 
 # Create your views here.
@@ -530,20 +530,22 @@ class CustomerAPIView(APIView):
 class CollectionView(View):
     print("A")
     def get(self, request):
+        sdate = request.GET.get('startdate')
+        edate = request.GET.get('enddate')
+        shift = request.GET.get('shift')
+        type = request.GET.get('type')
+        if not sdate or not edate:
+            return JsonResponse({"Status":"Start data and End date is mandatory"},status=400)
         try:
             pk = request.GET.get('id')
             center = Center.objects.get(id=pk)
             print("A")
         except Center.DoesNotExist:
             return JsonResponse({"status":"id is missing or invalid"})
-        sdate = request.GET.get('startdate')
-        edate = request.GET.get('enddate')
-        shift = request.GET.get('shift')
-        type = request.GET.get('type')
+
         if pk:
             collected = Collection.objects.filter(center_id=pk)
-        if not sdate or not edate:
-            return JsonResponse({"Status":"Start data and End date is mandatory"},status=400)
+
 
         #if edate and not sdate:
             #return JsonResponse({"Status":"Start data and End date is mandatory"},status=400)
@@ -564,17 +566,21 @@ class CollectionView(View):
         for c in collected:
             name={"shift":c.shift,"date":c.date,"center name":center.name}
             li.append(name)
-            print(c.date,c.shift,center.name)
-            fat +=c.fat
+            #print(c.date,c.shift,center.name)
+            #fat +=c.fat
             quantity += c.quantity
+            fat += c.quantity * c.fat
+            print(fat)
+            print("F",c.fat)
+            print(quantity)
             count+=1
-            snf+= c.snf
-            rate+= c.rate
-
+            snf+= c.snf * c.quantity
+            rate+= c.rate *c.quantity
+            #print(fat//quantity)
         #return JsonResponse(li,safe=False,status=200)
         #collectionbycenter = list(center.centers.filter(shift='M').values())
-        print("Average Fat= " , fat/count," average Quantity=", quantity/count, "Average snf=", snf/count,"Average rate=",rate/count)
-        afterfilter = {" Ave fat":fat/count,"Ave quantity":quantity/count,"Ave snf":snf/count,"Ave rate":rate/count}
+        print("Average Fat= " , fat/quantity," average Quantity=", quantity/count, "Average snf=", snf/quantity,"Average rate=",rate/quantity)
+        afterfilter = {" Ave fat":fat/quantity,"Ave quantity":quantity/count,"Ave snf":snf/quantity,"Ave rate":rate/quantity}
         dict2 = {"COllections": li, "average": afterfilter}
 
         return JsonResponse(dict2,safe=False, status=200)
@@ -582,13 +588,19 @@ class CollectionView(View):
 ##-------------------------------------------------------------------------------------------
 # viewset for 3 models
 
-
+from rest_framework.response import Response
 class CenterViewSet(ViewSet):
-
+    c = Center.objects.filter(status=1).all()
     def list(self,request):
-        c = Center.objects.all()
-        center = list(Center.objects.all().values())
-        return JsonResponse(center, safe=False)
+        center =Center.objects.filter(status=2)
+        id= request.GET.get('id')
+        if id:
+            center = center.filter(id = id)
+            if not center:
+                return Response({"status":"id not"} )
+        center_seri = CenterSerializer(center, many=True)
+        return Response(center_seri.data)
+# here i need to handle for null value error in json body
     def create(self,request):
         data = request.data
         center = Center.objects.create(
@@ -605,48 +617,107 @@ class CenterViewSet(ViewSet):
         data = request.data
         print(data)
         id = request.GET.get('id')
+        if not id:
+            return Response({'message':'id required'})
         print(id)
-        center = Center.objects.get(pk=id)
-        center.code = data.get('code', center.code)
-        center.short_name = data.get('shortname', center.short_name)
-        center.name = data.get('name', center.name)
-        center.phone = data.get('phone', center.phone)
-        center.village = data.get('village', center.village)
-        center.save()
-        return JsonResponse({'message': 'Center updated successfully'})
+        try:
+            center = Center.objects.get(id=id , status = 2)
+            center.code = data.get('code', center.code)
+            center.short_name = data.get('shortname', center.short_name)
+            center.name = data.get('name', center.name)
+            center.phone = data.get('phone', center.phone)
+            center.village = data.get('village', center.village)
+            center.save()
+            return Response({'message': 'Center updated successfully'})
+        except Center.DoesNotExist:
+            return Response({'message':'Invalid id '})
 
     def destroy(self,request):
+        id = request.GET.get('id')
+        if not id:
+            return Response({'Status':'ID required'})
         try:
-            id = request.GET.get('id')
-            center = Center.objects.get(pk=id)
+            center = Center.objects.get(id=id)
             if center.status == 1 or center.status == 2:
                 center.status = 3
                 center.save()
                 return JsonResponse({'status': 'Record deleted'})
             else:
                 return JsonResponse({'Status': 'id does not exist'})
-        except Customer.DoesNotExist:
+        except Center.DoesNotExist:
             return JsonResponse({'status': 'id not exists'}, status=404)
 
 
+class CustomerViewSet(ViewSet):
+    def list(self, request):
+        customer = Customer.objects.filter(status=2)
+        id = request.GET.get('id')
+        if id:
+            customer = customer.filter(id=id)
+            if not customer:
+                return Response({"status": "id not"})
+        customer_seri = CustomerSerializer(customer, many=True)
+        return Response(customer_seri.data)
 
 
 
-"""
+class CustomerViewSet(ViewSet):
+    def list(self, request):
+        customer = Customer.objects.filter(status=2)
+        id = request.GET.get('id')
+        if id:
+            customer = customer.filter(id=id)
+            if not customer.exists():
+                return Response({"status": "id not found"}, status=404)
+        customer_seri = CustomerSerializer(customer, many=True)
+        return Response(customer_seri.data)
+
+    # Add these methods if you want to support them in your routes
+    def create(self, request):
+        serializer = CustomerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def update(self, request, pk=None):
+        try:
+            customer = Customer.objects.get(pk=pk)
+        except Customer.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        serializer = CustomerSerializer(customer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        try:
+            customer = Customer.objects.get(pk=pk)
+        except Customer.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        customer.delete()
+        return Response({"status": "Deleted"})
+
+
+class CollectionViewSet(ViewSet):
+    def list(self, request):
+        collection = Collection.objects.filter(status=2)
+        id = request.GET.get('id')
+        if id:
+            collection = collection.filter(id=id)
+            if not collection:
+                return Response({"status": "id not found"}, status=404)
+        collection_seri = CustomerSerializer(collection, many=True)
+        return Response(collection_seri.data)
+
+
+
+
+
+
+    """
 
 2) create a api view to perform crud operation - done
-
-
-
-
-def viaserialize(request):
-    id = request.GET.get('id')
-    try:
-        center = Center.objects.get(id=id)
-        center_seri = CenterSerializer(center)
-        return JsonResponse(center_seri.data)  #  Return as JSONResponse
-    except Center.DoesNotExist:
-        return JsonResponse({"error": "Center not found"}, status=404) # Handle the case where the object doesn't exist
-
 
 """

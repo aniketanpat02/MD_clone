@@ -25,9 +25,10 @@ from django.contrib import admin
 from django.urls import path, include
 
 from firstapp.views import (gett, get_center, create_center, update_center, delete_center, single_update, get_user,
-                            get_collections, get_collection1, CenterViewSet, viaserialize)
+                            get_collections, get_collection1, viaserialize)
 from firstapp.views import(get_customer,get_customer1)
 from firstapp.views import CenterView, CollectionView,CustomerAPIView
+from firstapp.views import  CenterViewSet, CustomerViewSet , CollectionViewSet
 
 
 admin.site.site_header = "Dairy Admin"
@@ -59,8 +60,8 @@ urlpatterns = [
     path('collection/list',CollectionView.as_view()),
     path('customer/list',CustomerAPIView.as_view()),
     path('center/list1',CenterViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
-
-
+    #path('customer/list1',CustomerViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
+    path('collection/list1',CollectionViewSet.as_view({'get': 'list'}))
 
 ]
 

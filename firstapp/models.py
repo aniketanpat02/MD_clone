@@ -17,7 +17,7 @@ class Center(models.Model):
 
 
     def __str__(self):
-        return self.short_name
+        return str(self.pk)
 
 class Customer(models.Model):
     number = models.IntegerField(max_length=3)
