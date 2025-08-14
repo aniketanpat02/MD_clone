@@ -1,4 +1,5 @@
 from http.client import responses
+from itertools import count
 
 from django.http import HttpResponse , JsonResponse
 from django.shortcuts import render
@@ -8,11 +9,11 @@ import json
 from django.views import View
 from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import ViewSet, ModelViewSet
 from django.http import JsonResponse
 from .models import Center
 import json
-
+from rest_framework.response import Response
 from firstapp.serializer import CenterSerializer , CustomerSerializer , CollectionSerializer
 
 
@@ -523,7 +524,7 @@ class CustomerAPIView(APIView):
         except Customer.DoesNotExist:
             return JsonResponse({'status': 'id not exists'}, status=404)
 
-1
+
 #-------------------------------------------------------------------------------------------
 # Collection according to filter and One to many relationship
 @method_decorator(csrf_exempt, name='dispatch')
@@ -588,7 +589,7 @@ class CollectionView(View):
 ##-------------------------------------------------------------------------------------------
 # viewset for 3 models
 
-from rest_framework.response import Response
+
 class CenterViewSet(ViewSet):
     c = Center.objects.filter(status=1).all()
     def list(self,request):
@@ -647,7 +648,6 @@ class CenterViewSet(ViewSet):
         except Center.DoesNotExist:
             return JsonResponse({'status': 'id not exists'}, status=404)
 
-
 class CustomerViewSet(ViewSet):
     def list(self, request):
         customer = Customer.objects.filter(status=2)
@@ -656,19 +656,6 @@ class CustomerViewSet(ViewSet):
             customer = customer.filter(id=id)
             if not customer:
                 return Response({"status": "id not"})
-        customer_seri = CustomerSerializer(customer, many=True)
-        return Response(customer_seri.data)
-
-
-
-class CustomerViewSet(ViewSet):
-    def list(self, request):
-        customer = Customer.objects.filter(status=2)
-        id = request.GET.get('id')
-        if id:
-            customer = customer.filter(id=id)
-            if not customer.exists():
-                return Response({"status": "id not found"}, status=404)
         customer_seri = CustomerSerializer(customer, many=True)
         return Response(customer_seri.data)
 
@@ -699,25 +686,102 @@ class CustomerViewSet(ViewSet):
         customer.delete()
         return Response({"status": "Deleted"})
 
-
 class CollectionViewSet(ViewSet):
     def list(self, request):
-        collection = Collection.objects.filter(status=2)
+        collection = Collection.objects.filter(status=1)
         id = request.GET.get('id')
         if id:
             collection = collection.filter(id=id)
             if not collection:
                 return Response({"status": "id not found"}, status=404)
-        collection_seri = CustomerSerializer(collection, many=True)
-        return Response(collection_seri.data)
+        serializer = CollectionSerializer(collection, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        data = request.data
+        collection = Collection.objects.create(
+            date=data['date'],
+            type=data['type'],
+            shift=data['shift'],
+            quantity=data['quantity'],
+            snf=data['snf'],
+            fat=data['fat'],
+            rate=data['rate']
+        )
+        return Response({'Data insserted at': collection.id})
+
+    def update(self, request):
+        data = request.data
+        id = request.GET.get('id')
+        try:
+            collection = Collection.objects.get(status=1, id=id)
+            collection.date = data.get('date',collection.date)
+            collection.type = data.get('type',collection.type)
+            collection.shift = data.get('shift',collection.shift)
+            collection.quantity = data.get('quantity',collection.quantity)
+            collection.snf = data.get('snf',collection.snf)
+            collection.fat = data.get('fat',collection.fat)
+            collection.rate = data.get('rate',collection.rate)
+            collection.save()
+            return Response({'Small record Status': 'updated'})
+        except Collection.DoesNotExist:
+            return Response({'status': 'id not exists'}, status=404)
+
+    def destroy(self,request):
+        id = request.GET.get('id')
+        if not id:
+            return Response({'Status':'ID required'})
+        try:
+            collection = Collection.objects.get(id=id)
+            if collection.status == 1 or collection.status == 2:
+                collection.status = 3
+                collection.save()
+                return JsonResponse({'status': 'Record deleted'})
+            else:
+                return JsonResponse({'Status': 'id does not exist'})
+        except Center.DoesNotExist:
+            return JsonResponse({'status': 'id not exists'}, status=404)
+#-------------------------------------------------------------------------------------------------
+from rest_framework import viewsets
+from firstapp.serializer import  CenterSerializer
+class CenterViewSet1(viewsets.ModelViewSet):
+    queryset = Center.objects.all()
+    serializer_class  = CenterSerializer
+    def list(self, request, *args, **kwargs):
+        id = request.GET.get('id')
+        queryset = Center.objects.filter(id=id)
+        serializer = CenterSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+class Relation1ViewSet(viewsets.ModelViewSet):
+    def list(self, request, *args, **kwargs):
+        print("a")
+        collectionid=request.GET.get('collectionid')
+
+        edate = request.GET.get('edate')
+        if not sdate or not edate:
+            return Response({'Status':'Startdate and Enddate is required'})
+        li=[]
+        li1=[]
+        li2=[]
+        collection = Collection.objects.filter(date__range=[sdate, edate])
+        #collection_seri= CollectionSerializer(collection, many=True)
+        print(collection)
+        for c in collection :
+            center = Center.objects.get(id=c.center_id)
+            customer = Customer.objects.get(id=c.customer_id)
+            collection_seri= CollectionSerializer(c)
+            center_seri=CenterSerializer(center)
+            customer_seri = CustomerSerializer(customer)
+            dict={'Collection Data':collection_seri.data,'center Detail':center_seri.data,'customer data':customer_seri.data}
+            li.append(dict)
+            print(customer)
 
 
+        return Response({'Detail':li})
 
 
-
-
-    """
-
+"""
 2) create a api view to perform crud operation - done
 
 """

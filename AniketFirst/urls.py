@@ -28,7 +28,7 @@ from firstapp.views import (gett, get_center, create_center, update_center, dele
                             get_collections, get_collection1, viaserialize)
 from firstapp.views import(get_customer,get_customer1)
 from firstapp.views import CenterView, CollectionView,CustomerAPIView
-from firstapp.views import  CenterViewSet, CustomerViewSet , CollectionViewSet
+from firstapp.views import  CenterViewSet, CustomerViewSet , CollectionViewSet ,CenterViewSet1,Relation1ViewSet
 
 
 admin.site.site_header = "Dairy Admin"
@@ -60,8 +60,10 @@ urlpatterns = [
     path('collection/list',CollectionView.as_view()),
     path('customer/list',CustomerAPIView.as_view()),
     path('center/list1',CenterViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
-    #path('customer/list1',CustomerViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
-    path('collection/list1',CollectionViewSet.as_view({'get': 'list'}))
+    path('center/list2',CenterViewSet1.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
+    path('customer/list1',CustomerViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
+    path('collection/list1',CollectionViewSet.as_view({'get': 'list','post':'create','put':'update','delete':'destroy'})),
+    path('relation/list1',Relation1ViewSet.as_view({'get': 'list', 'post': 'create', 'put': 'update', 'delete': 'destroy'}))
 
 ]
 

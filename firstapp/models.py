@@ -39,7 +39,7 @@ class Customer(models.Model):
     status = models.IntegerField(choices=is_deleted,default=1)
 
     def __str__(self):
-        return self.first_name
+        return str(self.pk)
 
 
 class Collection(models.Model):
@@ -65,6 +65,7 @@ class Collection(models.Model):
     ]
     status = models.IntegerField(choices=is_deleted, default=1)
     center = models.ForeignKey(Center,on_delete=models.CASCADE,related_name='centers',default=5)
+    customer = models.ForeignKey(Customer,on_delete=models.CASCADE , related_name='customer', default =10)
 
     def __str__(self):
         return self.type

@@ -15,33 +15,40 @@ class CenterSerializer(serializers.Serializer):
         fields = "__all__"
 
 
-class CustomerSerializer(serializers.Serializer):
-    number= serializers.IntegerField()
-    number_prefix = serializers.IntegerField()
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    gender = serializers.IntegerField()
-    dob = serializers.DateField()
-    mobile = serializers.IntegerField()
+class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
         fields = "__all__"
 
 
-class CollectionSerializer(serializers.Serializer):
-    date= serializers.DateField()
-    type = serializers.CharField()
-    shift = serializers.CharField()
-    quantity= serializers.DecimalField(max_digits=3,decimal_places=2)
-    snf = serializers.DecimalField(max_digits=4,decimal_places=2)
-    fat= serializers.DecimalField(max_digits=4,decimal_places=2)
-    rate = serializers.DecimalField(max_digits=4,decimal_places=2)
+class CollectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Collection
-        field ="__all__"
+        fields ="__all__"
 
+"""
 
+from rest_framework import serializers
 
+class CollectionSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    type = serializers.CharField()
+    shift = serializers.CharField()
+    quantity = serializers.DecimalField(max_digits=3, decimal_places=2)
+    snf = serializers.DecimalField(max_digits=4, decimal_places=2)
+    fat = serializers.DecimalField(max_digits=4, decimal_places=2)
+    rate = serializers.DecimalField(max_digits=4, decimal_places=2)
 
+    def to_representation(self, instance):
+        return {
+            "date": instance.date,
+            "type": instance.type,
+            "shift": instance.shift,
+            "quantity": instance.quantity,
+            "snf": instance.snf,
+            "fat": instance.fat,
+            "rate": instance.rate,
+        }
+"""
