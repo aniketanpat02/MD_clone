@@ -744,6 +744,7 @@ class CollectionViewSet(ViewSet):
 #-------------------------------------------------------------------------------------------------
 from rest_framework import viewsets
 from firstapp.serializer import  CenterSerializer
+from datetime import datetime
 class CenterViewSet1(viewsets.ModelViewSet):
     queryset = Center.objects.all()
     serializer_class  = CenterSerializer
@@ -754,34 +755,68 @@ class CenterViewSet1(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 class Relation1ViewSet(viewsets.ModelViewSet):
-    def list(self, request, *args, **kwargs):
-        print("a")
-        collectionid=request.GET.get('collectionid')
+    queryset = Collection.objects.filter(status=1)
+    serializer_class = CollectionSerializer
+    # def list(self, request, *args, **kwargs):
+    #     #implement super queryset 2) select related 3) By Map
+    #     sdate= request.GET.get('sdate')
+    #     sdate = datetime.strptime(sdate, '%Y-%m-%d').date()
+    #     edate = request.GET.get('edate')
+    #     edate = datetime.strptime(edate, '%Y-%m-%d').date()
+    #     shift = request.GET.get('shift')
+    #     if not sdate or not edate:
+    #         return Response({'Status':'Start date and End date is required'})
+    #
+    #
+    #     if edate < sdate :
+    #         return Response({'Status':'Start date comparatively greater than end date'})
+    #     #queryset = super().get_queryset()
+    #     queryset = self.queryset.filter(date__range=[sdate, edate]).select_related('center', 'customer')
+    #     if shift:
+    #         queryset = self.queryset.filter(shift=shift)
+    #     self.queryset= queryset
+    #     return super(Relation1ViewSet, self).list(request,*args,**kwargs)
 
+
+    def list(self,request,*args,**kwargs):
+
+        customerid = request.GET.get('customerid')
+        print("A")
+        sdate = request.GET.get('sdate')
+        sdate = datetime.strptime(sdate, '%Y-%m-%d').date()
         edate = request.GET.get('edate')
+        edate = datetime.strptime(edate, '%Y-%m-%d').date()
         if not sdate or not edate:
-            return Response({'Status':'Startdate and Enddate is required'})
-        li=[]
-        li1=[]
-        li2=[]
-        collection = Collection.objects.filter(date__range=[sdate, edate])
-        #collection_seri= CollectionSerializer(collection, many=True)
-        print(collection)
-        for c in collection :
-            center = Center.objects.get(id=c.center_id)
-            customer = Customer.objects.get(id=c.customer_id)
-            collection_seri= CollectionSerializer(c)
-            center_seri=CenterSerializer(center)
-            customer_seri = CustomerSerializer(customer)
-            dict={'Collection Data':collection_seri.data,'center Detail':center_seri.data,'customer data':customer_seri.data}
-            li.append(dict)
-            print(customer)
+            return Response({'Status': 'Startdate and Enddate is required'})
+        if not customerid:
+            return Response({'status':'Customer id is required'})
+        if edate < sdate:
+            return Response({'Status':'Start date comparatively greater than end date'})
+        shift = request.GET.get('shift')
+        queryset = self.queryset.filter(date__range=[sdate, edate],customer_id= customerid, status=1).select_related('center','customer')
+        if shift:
+            queryset = queryset.filter(shift=shift)
+       #else:
+           # queryset = queryset.filter
 
 
-        return Response({'Detail':li})
+        def dict(c):
+            dic = {
+                'Customer id': c.customer_id,
+                'Date': c.date,
+                'shift': c.shift,
+                'Quantity': c.quantity,
+                'Fat':c.fat
+            }
+            return dic
+        Map = map(dict, queryset)
+        return Response(Map)
+
 
 
 """
 2) create a api view to perform crud operation - done
+
+
 
 """

@@ -68,7 +68,7 @@ class Collection(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE , related_name='customer', default =10)
 
     def __str__(self):
-        return self.type
+        return str(self.pk)
 
 
 

@@ -23,6 +23,8 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class CollectionSerializer(serializers.ModelSerializer):
+    center = CenterSerializer(read_only=True)
+    customer = CustomerSerializer(read_only=True)
 
     class Meta:
         model = Collection
@@ -30,25 +32,5 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 """
 
-from rest_framework import serializers
 
-class CollectionSerializer(serializers.Serializer):
-    date = serializers.DateField()
-    type = serializers.CharField()
-    shift = serializers.CharField()
-    quantity = serializers.DecimalField(max_digits=3, decimal_places=2)
-    snf = serializers.DecimalField(max_digits=4, decimal_places=2)
-    fat = serializers.DecimalField(max_digits=4, decimal_places=2)
-    rate = serializers.DecimalField(max_digits=4, decimal_places=2)
-
-    def to_representation(self, instance):
-        return {
-            "date": instance.date,
-            "type": instance.type,
-            "shift": instance.shift,
-            "quantity": instance.quantity,
-            "snf": instance.snf,
-            "fat": instance.fat,
-            "rate": instance.rate,
-        }
 """

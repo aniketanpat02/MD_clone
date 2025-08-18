@@ -63,7 +63,7 @@ urlpatterns = [
     path('center/list2',CenterViewSet1.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
     path('customer/list1',CustomerViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
     path('collection/list1',CollectionViewSet.as_view({'get': 'list','post':'create','put':'update','delete':'destroy'})),
-    path('relation/list1',Relation1ViewSet.as_view({'get': 'list', 'post': 'create', 'put': 'update', 'delete': 'destroy'}))
+    path('relation/list1',Relation1ViewSet.as_view({'get': 'list'}))
 
 ]
 
