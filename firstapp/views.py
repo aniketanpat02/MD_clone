@@ -744,6 +744,7 @@ class CollectionViewSet(ViewSet):
 #-------------------------------------------------------------------------------------------------
 from rest_framework import viewsets
 from firstapp.serializer import  CenterSerializer
+from django.db.models import Sum, Avg,Max
 from datetime import datetime
 class CenterViewSet1(viewsets.ModelViewSet):
     queryset = Center.objects.all()
@@ -779,9 +780,9 @@ class Relation1ViewSet(viewsets.ModelViewSet):
 
 
     def list(self,request,*args,**kwargs):
-
+        print("a")
         customerid = request.GET.get('customerid')
-        print("A")
+        # print("A")
         sdate = request.GET.get('sdate')
         sdate = datetime.strptime(sdate, '%Y-%m-%d').date()
         edate = request.GET.get('edate')
@@ -792,31 +793,52 @@ class Relation1ViewSet(viewsets.ModelViewSet):
             return Response({'status':'Customer id is required'})
         if edate < sdate:
             return Response({'Status':'Start date comparatively greater than end date'})
-        shift = request.GET.get('shift')
+        shift =request.GET.get('shift').upper()
+
+        print(shift)
         queryset = self.queryset.filter(date__range=[sdate, edate],customer_id= customerid, status=1).select_related('center','customer')
-        if shift:
-            queryset = queryset.filter(shift=shift)
-       #else:
-           # queryset = queryset.filter
+        """
+        filterdata= ['customer_id','date__date']
+        if shift == 'true':
+            filterdata.append('shift')
 
-
-        def dict(c):
-            dic = {
+        group = queryset.values(*filterdata).annotate(quantity=Sum('quantity'))
+        print(type(group))
+        print(shift)
+        return Response(group)
+        """
+        if shift == 'TRUE' or shift == '1' or shift=='M' or shift=='E':
+            if shift=='M' or shift=='E':
+                queryset = queryset.filter(shift = shift)
+            def dict(c):
+                dic = {
                 'Customer id': c.customer_id,
                 'Date': c.date,
                 'shift': c.shift,
                 'Quantity': c.quantity,
                 'Fat':c.fat
             }
-            return dic
-        Map = map(dict, queryset)
-        return Response(Map)
+                return dic
+            Map = map(dict, queryset)
+            return Response(Map)
+        else :
+            print("a")
+            group = queryset.values('date__date').annotate(quantity=Sum('quantity'))
+            print(group.aggregate(Max("quantity", default=0)))
+            print(group)
+            #data = list(group)
+            for item in group:
+                item.update({
+                    'Customer ID': customerid,
+                    'Date': item.pop('date__date'),
+                    'Total Quantity': item.pop('quantity')
+                })
 
+            return Response(group)
 
 
 """
 2) create a api view to perform crud operation - done
-
 
 
 """
