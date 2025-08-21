@@ -3,6 +3,8 @@ from itertools import count
 
 from django.http import HttpResponse , JsonResponse
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+
 from firstapp.models import Center, Customer, Collection
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -758,6 +760,7 @@ class CenterViewSet1(viewsets.ModelViewSet):
 class Relation1ViewSet(viewsets.ModelViewSet):
     queryset = Collection.objects.filter(status=1)
     serializer_class = CollectionSerializer
+    permission_classes = (IsAuthenticated,)
     # def list(self, request, *args, **kwargs):
     #     #implement super queryset 2) select related 3) By Map
     #     sdate= request.GET.get('sdate')
@@ -780,9 +783,7 @@ class Relation1ViewSet(viewsets.ModelViewSet):
 
 
     def list(self,request,*args,**kwargs):
-        print("a")
         customerid = request.GET.get('customerid')
-        # print("A")
         sdate = request.GET.get('sdate')
         sdate = datetime.strptime(sdate, '%Y-%m-%d').date()
         edate = request.GET.get('edate')
@@ -793,20 +794,10 @@ class Relation1ViewSet(viewsets.ModelViewSet):
             return Response({'status':'Customer id is required'})
         if edate < sdate:
             return Response({'Status':'Start date comparatively greater than end date'})
-        shift =request.GET.get('shift').upper()
-
-        print(shift)
+        shift =request.GET.get('shift')
+        if shift:
+            shift=shift.upper()
         queryset = self.queryset.filter(date__range=[sdate, edate],customer_id= customerid, status=1).select_related('center','customer')
-        """
-        filterdata= ['customer_id','date__date']
-        if shift == 'true':
-            filterdata.append('shift')
-
-        group = queryset.values(*filterdata).annotate(quantity=Sum('quantity'))
-        print(type(group))
-        print(shift)
-        return Response(group)
-        """
         if shift == 'TRUE' or shift == '1' or shift=='M' or shift=='E':
             if shift=='M' or shift=='E':
                 queryset = queryset.filter(shift = shift)
@@ -817,24 +808,30 @@ class Relation1ViewSet(viewsets.ModelViewSet):
                 'shift': c.shift,
                 'Quantity': c.quantity,
                 'Fat':c.fat
-            }
+                }
                 return dic
             Map = map(dict, queryset)
             return Response(Map)
         else :
-            print("a")
-            group = queryset.values('date__date').annotate(quantity=Sum('quantity'))
-            print(group.aggregate(Max("quantity", default=0)))
-            print(group)
-            #data = list(group)
+            group = queryset.values('date__date').annotate(quantity=Sum('quantity'),AVEFAT=Avg('fat'))
             for item in group:
                 item.update({
                     'Customer ID': customerid,
                     'Date': item.pop('date__date'),
                     'Total Quantity': item.pop('quantity')
                 })
-
             return Response(group)
+
+"""
+        filterdata= ['customer_id','date__date']
+        if shift == 'true':
+            filterdata.append('shift')
+
+        group = queryset.values(*filterdata).annotate(quantity=Sum('quantity'))
+        print(type(group))
+        print(shift)
+        return Response(group)
+        """
 
 
 """
