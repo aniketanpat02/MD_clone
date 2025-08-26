@@ -3,7 +3,7 @@ from itertools import count
 
 from django.http import HttpResponse , JsonResponse
 from django.shortcuts import render
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 
 from firstapp.models import Center, Customer, Collection
 from django.views.decorators.csrf import csrf_exempt
@@ -760,7 +760,7 @@ class CenterViewSet1(viewsets.ModelViewSet):
 class Relation1ViewSet(viewsets.ModelViewSet):
     queryset = Collection.objects.filter(status=1)
     serializer_class = CollectionSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     # def list(self, request, *args, **kwargs):
     #     #implement super queryset 2) select related 3) By Map
     #     sdate= request.GET.get('sdate')
