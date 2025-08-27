@@ -18,7 +18,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.core.serializers import serialize
 from rest_framework.routers import DefaultRouter
-
+from django.urls import path
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 
 from django.contrib import admin
@@ -63,7 +67,10 @@ urlpatterns = [
     path('center/list2',CenterViewSet1.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
     path('customer/list1',CustomerViewSet.as_view({'get': 'list', 'post':'create','put':'update','delete':'destroy'})),
     path('collection/list1',CollectionViewSet.as_view({'get': 'list','post':'create','put':'update','delete':'destroy'})),
-    path('relation/list1',Relation1ViewSet.as_view({'get': 'list'}))
+    path('relation/list1',Relation1ViewSet.as_view({'get': 'list'})),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # Login
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Refresh token
+
 
 ]
 
